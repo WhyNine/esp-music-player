@@ -1,0 +1,79 @@
+esphome:
+  name: "esp-radio"
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: arduino
+
+external_components:
+  - source: 
+      type: local
+      path: my_components
+
+# Enable logging, limit to error/warning/info
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  platform: esphome
+  
+wifi:
+  networks:
+  - ssid: !secret evans_ssid
+    password: !secret evans_password
+  - ssid: !secret simon_ssid
+    password: !secret simon_password
+
+captive_portal:
+
+i2s_audio:
+  - i2s_lrclk_pin: GPIO27
+    i2s_bclk_pin: GPIO14
+    i2s_mclk_pin: GPIO3
+
+media_player:
+  - platform: i2s_audio
+    dac_type: external
+    i2s_dout_pin: GPIO26
+    name: "radio_player"
+    on_play:
+      - logger.log: "Playback started!"
+      
+i2c:
+  sda: GPIO18
+  scl: GPIO19
+  id: i2c_bus
+
+light:
+  - platform: binary
+    output: pushbutton_led
+    name: "Pushbutton LED"
+  - platform: MyKnobComponent
+    id: knob                      # can be anything unique
+    rotary_knob:                  # this must be same as used in Optional("rotary_knob")
+      name: "Rotary encoder"
+    name: "Knob LED"
+    default_transition_length: 0s
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO22
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Pushbutton"
+    filters:
+      - delayed_on_off: 20ms      # debounce time
+
+output:
+  - platform: gpio
+    id: pushbutton_led
+    pin: 
+      number: GPIO23
+      inverted: True
+
