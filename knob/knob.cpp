@@ -1,3 +1,5 @@
+// Code derived from Python original at https://github.com/pimoroni/ioe-python/blob/main/ioexpander/encoder.py
+
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/gpio.h"
@@ -11,9 +13,6 @@ namespace esphome {
 namespace knob_ns {
 
 static const char *TAG = "rgb_rotary_encoder";
-uint8_t setup_complete = 0;
-
-int cnt = 0;
 
 // These values encode our desired pin function: IO, ADC, PWM
 // alongside the GPIO MODE for that port and pin (section 8.1)
@@ -35,21 +34,6 @@ const uint8_t  KNOB_C = 11;
 const uint8_t  LED_RED = 1;
 const uint8_t  LED_GREEN = 7;
 const uint8_t  LED_BLUE = 2;
-
-typedef struct {
-  char colour[8];
-  uint8_t values[3];
-} colours_struct;
-const colours_struct colours[8] = {
-  {"RED", {255, 0, 0}},
-  {"GREEN", {0, 255, 0}},
-  {"YELLOW", {255, 255, 0}},
-  {"BLUE", {0, 0, 255}},
-  {"PURPLE", {255, 0, 255}},
-  {"CYAN", {0, 255, 255}},
-  {"WHITE", {255, 255, 255}},
-  {"OFF", {0, 0, 0}}
-};
 
 pin_struct pins[15] = {{},                                                                                                                                                           // Pin |  ADC   |  PWM   |  ENC  |
     {.type = {PIN_MODE_IO, PIN_MODE_PWM},                .port = 1, .pin = 5, .enc_ch = 1, .reg_iopwm = 1, .bit_iopwm = 5, .pwm_ch = 5, .adc_ch = 0, .mode = 255},              // 1   |        | [CH 5] | CH 1  |
@@ -107,28 +91,6 @@ int whichPowerOfTwo(uint8_t n) {
     ++power;
   }
   return power;
-}
-
-struct RGB {
-    uint8_t r, g, b;
-};
-
-RGB hsvToRgb(float h) {
-    float r, g, b;
-    uint8_t i = uint8_t(h / 60) % 6;
-    float f = h / 60 - i;
-    float q = 1 - f;
-
-    switch (i) {
-        case 0: r = 1; g = f; b = 0; break;
-        case 1: r = q; g = 1; b = 0; break;
-        case 2: r = 0; g = 1; b = f; break;
-        case 3: r = 0; g = q; b = 1; break;
-        case 4: r = f; g = 0; b = 1; break;
-        case 5: r = 1; g = 0; b = q; break;
-    }
-
-    return RGB{uint8_t(r * 255), uint8_t(g * 255), uint8_t(b * 255)};
 }
 
 void MyKnobComponent::write_i2c_byte(uint8_t reg, uint8_t data) {
@@ -426,18 +388,6 @@ void MyKnobComponent::set_knob_colour(float r, float g, float b) {
   this->output(LED_BLUE, uint16_t(b * 500));
 }
 
-// Set the colour of the knob
-void MyKnobComponent::set_knob_hue(uint8_t vol) {
-//  ESP_LOGI(TAG, "Setting knob hue to %d", vol);
-  float h = 280 * vol / 100 + 80;
-  RGB rgb = hsvToRgb(h);
-//  ESP_LOGI(TAG, "new knob colours: %2x / %2x / %2x", rgb.r, rgb.b, rgb.g);
-  this->output(LED_RED, rgb.r);
-  this->output(LED_GREEN, rgb.g);
-  this->output(LED_BLUE, rgb.b);
-//  ESP_LOGI(TAG, "Done setting hue");
-}
-
 light::LightTraits MyKnobComponent::get_traits() {
   auto traits = light::LightTraits();
   traits.set_supported_color_modes({light::ColorMode::RGB});
@@ -455,10 +405,8 @@ void MyKnobComponent::write_state(light::LightState *state) {
   this->set_knob_colour(red, green, blue);
 }
 
-
-// Never seems to be called so put the call to it in update()
+// called once to set up device
 void MyKnobComponent::setup() {
-  setup_complete = 1;
 //  ESP_LOGI(TAG, "Setting up RGB Rotary Encoder...");
 
   uint8_t data = 0;
@@ -485,19 +433,9 @@ void MyKnobComponent::setup() {
 //  ESP_LOGI(TAG, "Done with most setup, now read knob and set hue");
   int knob = this->read_rotary_encoder();
 //  ESP_LOGI(TAG, "RGB Rotary Encoder value: %x", knob);
-  //setEncoderValue(0);
-//  ESP_LOGI(TAG, "RGB Rotary Encoder data: %x (should be 78)", data);
-  this->set_knob_hue(50);
 }
 
 void MyKnobComponent::update(){
-  if (setup_complete == 0) {
-    setup();
-  }
-}
-
-void MyKnobComponent::dump_config(){
-
 }
 
 void MyKnobComponent::loop()  {

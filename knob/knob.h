@@ -28,7 +28,6 @@ class MyKnobComponent : public light::LightOutput, public sensor::Sensor, public
     void setup() override;
     void loop() override;
     void update() override;
-    void dump_config() override;
     void update_knob_value(sensor::Sensor* knob) { this->knob_sensor = knob; }
     light::LightTraits get_traits() override;
     void write_state(light::LightState *state) override;
@@ -54,7 +53,6 @@ class MyKnobComponent : public light::LightOutput, public sensor::Sensor, public
     void reset_knob();
     void set_pwm_period(uint16_t value);
     void set_pwm_control(uint8_t divider);
-    void set_knob_hue(uint8_t vol);
     void set_knob_colour(float r, float g, float b);
 };
 
