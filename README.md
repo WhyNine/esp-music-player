@@ -18,6 +18,8 @@ i2c:
   sda: GPIOxx
   scl: GPIOxx
   id: i2c_bus
+  timeout: 2ms
+  frequency: 400kHz
 
 light:
   - platform: MyKnobComponent     # name of the folder within my_components which contains the files
@@ -35,7 +37,6 @@ To play music via an external I2S DAC, add the following to the YAML file:
 i2s_audio:
   - i2s_lrclk_pin: GPIOxx
     i2s_bclk_pin: GPIOxx
-    i2s_mclk_pin: GPIOx
 
 media_player:
   - platform: i2s_audio
